@@ -4,89 +4,96 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-BENCHMARK_RESULTS = json.load(open("../benchmark_results.json"))
-# MEASUREMENT_POINTS = np.array([1, 2, 3, 4])  # milliseconds
-MEASUREMENT_POINTS = np.linspace(1, 200, 10)
+
+class ResidualMatrix:
+    def __init__(self, name, data):
+        self.name = name
+        self.data = data
 
 
-def normalize(fastest, x):
-    return x / fastest
+class Benchmark:
+    def __init__(self, measurement_points=np.linspace(1, 200, 10)):
+        self.measurement_points = measurement_points
+        self.benchmark_results = json.load(open("../benchmark_results_new.json"))
+        spd_df = pd.read_csv("../dataset.csv")
+        spd = list(spd_df[spd_df.nsym == 1][spd_df.posdef][["path"]]["path"].values)
+        self.residual_matrices = [
+            e for e in [ResidualMatrix(e["filename"], self._residual_matrix(e)) for e in self.benchmark_results if e["filename"] in spd] if not e.data.empty
+        ]
 
+    def _residual_matrix(self, benchmark_result):
+        matrix_name = benchmark_result["filename"].split("/")[-1]
+        residuals_per_solver = dict()
+        for (solver_name, solver) in benchmark_result["solver"].items():
+            if solver["completed"]:
+                residuals = self._relative_residuals(solver_name, solver)
+                indices_non_trunc = np.searchsorted(np.array(solver["iteration_timestamps"]),
+                                                    (self.measurement_points / 1000.0))
+                indices = [i if i < len(residuals) else len(residuals) - 1 for i in indices_non_trunc]
+                residuals_per_solver[solver_name] = np.array(residuals)[indices]
+        performance_matrix = pd.DataFrame(data=residuals_per_solver, index=self.measurement_points)
+        performance_matrix.name = matrix_name
+        return performance_matrix.replace([np.inf], 1.0e+100).replace([np.nan, 0.0], 1.0e-16)
 
-def print_performance_profile(performance_matrix):
-    max = performance_matrix.max().max()
-    x_values = np.linspace(1, max, num=500)
-    y_lists = []
-    for solver in performance_matrix:
-        column = performance_matrix[solver]
-        y_values = [np.count_nonzero(column <= x) for x in x_values]
-        df = pd.DataFrame(data=y_values)
-        df.name = solver
-        y_lists.append(df)
+    @staticmethod
+    def _normalized_residual_matrix(residual_matrix):
+        for index in residual_matrix.index:
+            min_res = residual_matrix.loc[index].min()
+            residual_matrix.loc[index] = residual_matrix.loc[index].map(lambda x: x / min_res)
+        return residual_matrix
 
-    fig, ax = plt.subplots()
-    ax.set_xlabel("maximum slowdown factor over fastest")
-    ax.set_ylabel("Num of measurement points")
-    for y_values in y_lists:
-        ax.plot(x_values, np.array(y_values).flatten(), label=y_values.name, alpha=0.7)
-    plt.title(performance_matrix.name)
-    plt.legend(loc="lower right")
-    plt.show()
+    @staticmethod
+    def _relative_residuals(solver_name, solver):
+        residuals = solver["true_residuals"][::2] if solver_name == "bicgstab" else solver["true_residuals"]
+        return residuals
 
+    @staticmethod
+    def _res_sums(residual_matrix):
+        sums = np.array([residual_matrix[e].sum() for e in residual_matrix.columns])
+        return pd.DataFrame([sums], columns=residual_matrix.columns)
 
-def get_residual_matrix(benchmark_result):
-    matrix_name = benchmark_result["filename"].split("/")[-1]
-    residuals_per_solver = dict()
-    for (solver_name, solver) in benchmark_result["solver"].items():
-        if solver["completed"]:
-            residuals = get_relative_residuals(solver_name, solver)
-            indices_non_trunc = np.searchsorted(np.array(solver["iteration_timestamps"]), (MEASUREMENT_POINTS / 1000.0))
-            indices = [i if i < len(residuals) else len(residuals) - 1 for i in indices_non_trunc]
-            residuals_per_solver[solver_name] = np.array(residuals)[indices]
-    performance_matrix = pd.DataFrame(data=residuals_per_solver, index=MEASUREMENT_POINTS)
-    performance_matrix.name = matrix_name
-    return performance_matrix.replace([np.inf], 1.0e+100).replace([np.nan, 0.0], 1.0e-16)
+    @staticmethod
+    def limit_residual_column(column):
+        indices = column.index
+        limited_column = []
+        min_v = column.iloc[0]
+        for _, v in column.iteritems():
+            if v < min_v:
+                min_v = v
+            else:
+                v = min_v
+            limited_column.append(v)
+        return pd.Series(data=limited_column, index=indices)
 
+    def get_label_df(self):
+        residual_matrices = self.get_normalized_residual_matrices()
+        non_empty_indices = [i for i, e in enumerate(residual_matrices) if not e.empty]
+        matrices_res_sums = [self._res_sums(e)
+                             for e in residual_matrices if not e.empty]
+        filepaths = np.array([e["filename"] for e in self.benchmark_results])[non_empty_indices]
+        matrices_res_sums_df = pd.concat(matrices_res_sums) / len(self.measurement_points)
+        matrices_res_sums_df.insert(0, "path", filepaths)
+        return matrices_res_sums_df
 
-def get_relative_residuals(solver_name, solver):
-    residuals = solver["true_residuals"][::2] if solver_name == "bicgstab" else solver["true_residuals"]
-    # relative_residuals = np.array(residuals) / residuals[0]
-    return residuals
+    def get_residual_matrices(self):
+        residual_matrices = []
+        for res_mtx in self.residual_matrices:
+            for solver in res_mtx.data.columns:
+                res_mtx.data[solver] = self.limit_residual_column(res_mtx.data[solver])
+            residual_matrices.append(res_mtx)
+        return residual_matrices
 
-def get_normalized_residual_matrix(residual_matrix):
-    for index in residual_matrix.index:
-        min_res = residual_matrix.loc[index].min()
-        residual_matrix.loc[index] = residual_matrix.loc[index].map(lambda x: normalize(min_res, x))
-    return residual_matrix
+    def get_normalized_residual_matrices(self):
+        return [self._normalized_residual_matrix(e.data) for e in self.get_residual_matrices()]
 
-
-def get_res_sums_normalized(residual_matrix):
-    sums = np.array([residual_matrix[e].sum() for e in residual_matrix.columns])
-    df = pd.DataFrame([sums], columns=residual_matrix.columns)
-    df.iloc[0] = df.iloc[0].map(lambda x: x / df.iloc[0].min())
-    return df
-
-
-def get_res_sums(residual_matrix):
-    sums = np.array([residual_matrix[e].sum() for e in residual_matrix.columns])
-    return pd.DataFrame([sums], columns=residual_matrix.columns)
-
-
-def print_solver_histogram(matrices_res_sums_df):
-    bins = np.linspace(1, 20, 50)
-    matrices_res_sums_df.plot.hist(bins=bins, alpha=0.5)
-    plt.show()
-    for solver in matrices_res_sums_df.columns:
-        ax = matrices_res_sums_df[solver].plot.hist(bins=bins, alpha=0.5, legend=True)
+    def plot_solver_histogram(self):
+        matrices_res_sums = [self._res_sums(e)
+                             for e in self.get_normalized_residual_matrices()]
+        matrices_res_sums_df = pd.concat(matrices_res_sums) / len(self.measurement_points)
+        bins = np.linspace(1, 20, 50)
+        matrices_res_sums_df.plot.hist(bins=bins, alpha=0.5)
         plt.show()
-
-
-if __name__ == '__main__':
-    residual_matrices = [get_normalized_residual_matrix(get_residual_matrix(e)) for e in BENCHMARK_RESULTS]
-    matrices_res_sums = [get_res_sums(e)
-                         for e in residual_matrices if not e.empty]
-    print(pd.concat(matrices_res_sums))
-    matrices_res_sums_df = pd.concat(matrices_res_sums) / len(MEASUREMENT_POINTS)
-
-    print_solver_histogram(matrices_res_sums_df)
+        for solver in matrices_res_sums_df.columns:
+            ax = matrices_res_sums_df[solver].plot.hist(bins=bins, alpha=0.5, legend=True)
+            plt.show()
 
