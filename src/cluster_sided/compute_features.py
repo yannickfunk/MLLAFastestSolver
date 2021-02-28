@@ -1,11 +1,15 @@
+import os
 import json
 from scipy.io import mmread
 import numpy as np
 import pandas as pd
 
+USER_PATH = os.environ["PROJECT"] + "/users/funk1/"
+META_PATH = USER_PATH+'data/meta.json'
+PATHS_PATH = USER_PATH+'data/paths.json'
 
 def get_paths_dict():
-    paths_list = json.load(open("../paths.json"))
+    paths_list = json.load(open(PATHS_PATH))
     paths_dict = dict()
     for item in paths_list:
         matrix_id = item["id"]
@@ -15,7 +19,7 @@ def get_paths_dict():
 
 
 def get_meta_dict():
-    meta_list = json.load(open("../meta.json"))
+    meta_list = json.load(open(META_PATH))
     meta_dict = dict()
     for item in meta_list:
         matrix_id = item["id"]

@@ -5,10 +5,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-class ResidualMatrix:
-    def __init__(self, name, data):
-        self.name = name
-        self.data = data
+class Matrix:
+    def __init__(self, path, residuals):
+        self.path = path
+        self.residuals = residuals
 
 
 class Benchmark:
@@ -18,7 +18,7 @@ class Benchmark:
         spd_df = pd.read_csv("../dataset.csv")
         spd = list(spd_df[spd_df.nsym == 1][spd_df.posdef][["path"]]["path"].values)
         self.residual_matrices = [
-            e for e in [ResidualMatrix(e["filename"], self._residual_matrix(e)) for e in self.benchmark_results if e["filename"] in spd] if not e.data.empty
+            e for e in [Matrix(e["filename"], self._residual_matrix(e)) for e in self.benchmark_results if e["filename"] in spd] if not e.residuals.empty
         ]
 
     def _residual_matrix(self, benchmark_result):
@@ -66,7 +66,7 @@ class Benchmark:
         return pd.Series(data=limited_column, index=indices)
 
     def get_label_df(self):
-        residual_matrices = self.get_normalized_residual_matrices()
+        residual_matrices = self.get_matrices_with_normalized_residuals()
         non_empty_indices = [i for i, e in enumerate(residual_matrices) if not e.empty]
         matrices_res_sums = [self._res_sums(e)
                              for e in residual_matrices if not e.empty]
@@ -75,20 +75,20 @@ class Benchmark:
         matrices_res_sums_df.insert(0, "path", filepaths)
         return matrices_res_sums_df
 
-    def get_residual_matrices(self):
+    def get_matrices(self):
         residual_matrices = []
         for res_mtx in self.residual_matrices:
-            for solver in res_mtx.data.columns:
-                res_mtx.data[solver] = self.limit_residual_column(res_mtx.data[solver])
+            for solver in res_mtx.residuals.columns:
+                res_mtx.residuals[solver] = self.limit_residual_column(res_mtx.residuals[solver])
             residual_matrices.append(res_mtx)
         return residual_matrices
 
-    def get_normalized_residual_matrices(self):
-        return [self._normalized_residual_matrix(e.data) for e in self.get_residual_matrices()]
+    def get_matrices_with_normalized_residuals(self):
+        return [self._normalized_residual_matrix(e.residuals) for e in self.get_matrices()]
 
     def plot_solver_histogram(self):
         matrices_res_sums = [self._res_sums(e)
-                             for e in self.get_normalized_residual_matrices()]
+                             for e in self.get_matrices_with_normalized_residuals()]
         matrices_res_sums_df = pd.concat(matrices_res_sums) / len(self.measurement_points)
         bins = np.linspace(1, 20, 50)
         matrices_res_sums_df.plot.hist(bins=bins, alpha=0.5)

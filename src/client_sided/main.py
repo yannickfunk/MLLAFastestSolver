@@ -1,12 +1,11 @@
-from analyse_benchmark import Benchmark
-import pandas as pd
+from src.client_sided.benchmark import Benchmark
 import matplotlib.pyplot as plt
 import numpy as np
 
 benchmark = Benchmark(measurement_points=np.linspace(0, 200, 200))
 
 
-res_mtx = benchmark.get_residual_matrices()
+res_mtx = benchmark.get_matrices()
 
 count = 0
 for mtx in res_mtx:
@@ -16,6 +15,6 @@ for mtx in res_mtx:
         ax.plot(mtx.data.index, mtx.data[column], label=column)
     ax.legend()
     plt.yscale("log")
-    plt.title(mtx.name)
+    plt.title(mtx.path)
     plt.savefig(f"../plots/plot{count}.png")
 
