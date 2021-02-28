@@ -1,4 +1,3 @@
-import sys
 import json
 import numpy as np
 import pandas as pd
@@ -12,22 +11,26 @@ class Matrix:
 
 
 class Benchmark:
-    def __init__(self, measurement_points=np.linspace(1, 200, 10)):
+    def __init__(self,  benchmark_path, measurement_points=np.linspace(0, 200, 10)):
         self.measurement_points = measurement_points
-        self.benchmark_results = json.load(open("../benchmark_results_new.json"))
-        spd_df = pd.read_csv("../dataset.csv")
+        self.benchmark_results = json.load(open(benchmark_path))
+        spd_df = pd.read_csv("../../data/dataset.csv")
         spd = list(spd_df[spd_df.nsym == 1][spd_df.posdef][["path"]]["path"].values)
         self.residual_matrices = [
-            e for e in [Matrix(e["filename"], self._residual_matrix(e)) for e in self.benchmark_results if e["filename"] in spd] if not e.residuals.empty
+            # e for e in [Matrix(e["filename"], self._matrix(e)) for e in self.benchmark_results if e["filename"] in spd] if not e.residuals.empty
+            e for e in [Matrix(e["filename"], self._matrix(e)) for e in self.benchmark_results] if not e.residuals.empty
         ]
 
-    def _residual_matrix(self, benchmark_result):
+    def _matrix(self, benchmark_result):
         matrix_name = benchmark_result["filename"].split("/")[-1]
         residuals_per_solver = dict()
         for (solver_name, solver) in benchmark_result["solver"].items():
-            if solver["completed"]:
+            if solver["completed"] and solver_name in ["cg", "bicg", "fcg", "cgs", "gmres", "bicgstab", "idr"]:
                 residuals = self._relative_residuals(solver_name, solver)
-                indices_non_trunc = np.searchsorted(np.array(solver["iteration_timestamps"]),
+                solver_time = solver["apply"]["time"]
+                # iteration_timestamps = np.array(solver["iteration_timestamps"])
+                iteration_timestamps = np.linspace(solver_time / len(residuals), solver_time, len(residuals))
+                indices_non_trunc = np.searchsorted(iteration_timestamps,
                                                     (self.measurement_points / 1000.0))
                 indices = [i if i < len(residuals) else len(residuals) - 1 for i in indices_non_trunc]
                 residuals_per_solver[solver_name] = np.array(residuals)[indices]
