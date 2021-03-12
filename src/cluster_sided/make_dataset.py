@@ -1,17 +1,24 @@
-import os
-from compute_features import get_feature_df
-from analyse_benchmark import get_label_df
+try:
+    import os
+    from compute_features import get_feature_df
+    from benchmark import Benchmark
 
-USER_PATH = os.environ["PROJECT"] + "/users/funk1/"
-DATASET_PATH = USER_PATH+'data/dataset.csv'
+    USER_PATH = os.environ["PROJECT"] + "/users/funk1/"
+    DATA_PATH = USER_PATH + 'data/'
 
-label_df = get_label_df()
-print("got label df")
-feature_df = get_feature_df()
-print("got feature df")
+    print("creating_benchmark object..")
+    benchmark = Benchmark(DATA_PATH+"final_benchmark.json")
+    print("created!")
 
-dataset = label_df.merge(feature_df, on="path")
-print("merged dfs")
+    label_df = benchmark.get_label_df()
+    print("got label df")
+    feature_df = get_feature_df()
+    print("got feature df")
 
-dataset.to_csv(DATASET_PATH, index=False)
-print("saved dataset")
+    dataset = label_df.merge(feature_df, on="path")
+    print("merged dfs")
+
+    dataset.to_csv(DATA_PATH + "dataset.csv", index=False)
+    print("saved dataset")
+except Exception as e:
+    print(e)

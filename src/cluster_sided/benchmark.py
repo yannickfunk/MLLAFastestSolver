@@ -1,7 +1,7 @@
 import json
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 
 class Matrix:
@@ -14,8 +14,8 @@ class Benchmark:
     def __init__(self,  benchmark_path, measurement_points=np.linspace(0, 200, 10)):
         self.measurement_points = measurement_points
         self.benchmark_results = json.load(open(benchmark_path))
-        spd_df = pd.read_csv("../../data/dataset.csv")
-        spd = list(spd_df[spd_df.nsym == 1][spd_df.posdef][["path"]]["path"].values)
+        # spd_df = pd.read_csv("../../data/dataset.csv")
+        # spd = list(spd_df[spd_df.nsym == 1][spd_df.posdef][["path"]]["path"].values)
         self.residual_matrices = [
             # e for e in [Matrix(e["filename"], self._matrix(e)) for e in self.benchmark_results if e["filename"] in spd] if not e.residuals.empty
             e for e in [Matrix(e["filename"], self._matrix(e)) for e in self.benchmark_results] if not e.residuals.empty

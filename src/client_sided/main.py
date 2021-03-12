@@ -1,11 +1,10 @@
-from src.client_sided.benchmark import Benchmark
-import matplotlib.pyplot as plt
+from src.cluster_sided.benchmark import Benchmark
 import numpy as np
 
-benchmark = Benchmark("../../data/preliminary_benchmark.json", measurement_points=np.linspace(0, 200, 10))
+benchmark = Benchmark("../../data/final_benchmark.json")
 
-res_mtx = benchmark.plot_solver_histogram()
-
+df = benchmark.get_label_df()
+print(df[df["path"] == "/p/project/haf/data/funk1/.config/ssget/MM/Mycielski/mycielskian20/mycielskian20.mtx"].iloc[0])
 """
 count = 0
 for mtx in res_mtx:

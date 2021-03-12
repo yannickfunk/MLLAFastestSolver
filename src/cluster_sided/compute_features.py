@@ -8,23 +8,26 @@ USER_PATH = os.environ["PROJECT"] + "/users/funk1/"
 META_PATH = USER_PATH+'data/meta.json'
 PATHS_PATH = USER_PATH+'data/paths.json'
 
+
 def get_paths_dict():
-    paths_list = json.load(open(PATHS_PATH))
-    paths_dict = dict()
-    for item in paths_list:
-        matrix_id = item["id"]
-        matrix_path = item["path"]
-        paths_dict[matrix_id] = matrix_path
+    with open(PATHS_PATH) as paths:
+        paths_list = json.load(paths)
+        paths_dict = dict()
+        for item in paths_list:
+            matrix_id = item["id"]
+            matrix_path = item["path"]
+            paths_dict[matrix_id] = matrix_path
     return paths_dict
 
 
 def get_meta_dict():
-    meta_list = json.load(open(META_PATH))
-    meta_dict = dict()
-    for item in meta_list:
-        matrix_id = item["id"]
-        include = ["rows", "nonzeros", "posdef", "psym", "nsym"]
-        meta_dict[matrix_id] = {k: v for k, v in item.items() if k in include}
+    with open(META_PATH) as meta:
+        meta_list = json.load(meta)
+        meta_dict = dict()
+        for item in meta_list:
+            matrix_id = item["id"]
+            include = ["rows", "nonzeros", "posdef", "psym", "nsym"]
+            meta_dict[matrix_id] = {k: v for k, v in item.items() if k in include}
     return meta_dict
 
 
@@ -39,6 +42,9 @@ def nnz_per_row(mtx):
 def get_feature_df():
     feature_dict = get_feature_path_dict()
     for key, meta in feature_dict.items():
+        if meta["nonzeros"] > 1000000000:
+            continue
+        print(f'reading matrix {meta["path"]}')
         mtx = mmread(meta["path"])
         density = mtx.getnnz() / (mtx.shape[0] * mtx.shape[1])
         feature_dict[key]["density"] = density
