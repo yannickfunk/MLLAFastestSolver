@@ -4,6 +4,7 @@ import torch
 from ignite.engine import Events, create_supervised_trainer, create_supervised_evaluator
 from ignite.metrics import Accuracy, Loss
 from dataset import MatrixDataset
+from dataset_transformer import MatrixDatasetTransformer
 import pandas as pd
 import os
 import json
@@ -15,18 +16,18 @@ FEATURE_PATH = DATA_PATH + 'feature_vecs4096.json'
 
 feature_vecs = json.load(open(FEATURE_PATH))
 df = pd.read_csv(DATASET_PATH)
-df = df[df["path"].isin(list(feature_vecs.keys()))]
+# df = df[df["path"].isin(list(feature_vecs.keys()))]
 train_df = df.sample(frac=0.8)
 test_df = df.drop(train_df.index)
 
 
-train_set = MatrixDataset(train_df, feature_vecs)
-test_set = MatrixDataset(test_df, feature_vecs)
+train_set = MatrixDatasetTransformer(train_df)
+test_set = MatrixDatasetTransformer(test_df)
 
-train_loader = torch.utils.data.DataLoader(train_set, batch_size=1641,
-                                           shuffle=True, pin_memory=True)
-val_loader = torch.utils.data.DataLoader(test_set, batch_size=410,
-                                         shuffle=False, pin_memory=True)
+train_loader = torch.utils.data.DataLoader(train_set, batch_size=1,
+                                           shuffle=True)
+val_loader = torch.utils.data.DataLoader(test_set, batch_size=1,
+                                         shuffle=False)
 device = torch.device("cuda:0")
 print("device_count: ", torch.cuda.device_count())
 print("device: ", torch.cuda.get_device_name(0))
@@ -41,47 +42,15 @@ class PrintLayer(nn.Module):
         print(x.shape)
         return x
 
-"""
+
+encoder_layer = nn.TransformerEncoderLayer(d_model=None, nhead=None)
 model = nn.Sequential(
-    nn.BatchNorm1d(1),
-    nn.Conv1d(1, 64, 1),
-    nn.ReLU(),
-    nn.MaxPool1d(2),
-
-    nn.Conv1d(64, 64, 2),
-    nn.ReLU(),
-    nn.MaxPool1d(2),
-
-    nn.Dropout(0.3),
+    nn.TransformerEncoder(encoder_layer, num_layers=6),
+    PrintLayer(),
     nn.Flatten(),
-
-    nn.Linear(16448, 1024),
+    PrintLayer(),
+    nn.Linear(2048, 512),
     nn.ReLU(),
-
-    nn.Linear(1024, 128),
-    nn.ReLU(),
-
-    nn.Linear(128, 7),
-).to(device)
-"""
-model = nn.Sequential(
-    nn.BatchNorm1d(4105),
-    nn.Dropout(0.5),
-    nn.Linear(4105, 8192),
-    nn.ReLU(),
-
-    nn.Linear(8192, 4096),
-    nn.ReLU(),
-
-    nn.Linear(4096, 2048),
-    nn.ReLU(),
-
-    nn.Linear(2048, 1024),
-    nn.ReLU(),
-
-    nn.Linear(1024, 512),
-    nn.ReLU(),
-
     nn.Linear(512, 7),
 ).to(device)
 
@@ -98,7 +67,7 @@ val_metrics = {
 evaluator = create_supervised_evaluator(model, metrics=val_metrics, device=device)
 
 
-@trainer.on(Events.ITERATION_COMPLETED(every=1000))
+@trainer.on(Events.ITERATION_COMPLETED(every=100))
 def log_training_loss(trainer):
     print(f"Epoch[{trainer.state.epoch}] Loss: {trainer.state.output:.2f}")
 
