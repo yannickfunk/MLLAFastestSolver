@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import random
 from scipy.io import mmread
+import math
 
 
 class MatrixDatasetTransformer(torch.utils.data.Dataset):
@@ -14,13 +15,7 @@ class MatrixDatasetTransformer(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         sample = self.data_df.iloc[index]
-
-        if index in list(self.features.keys()):
-            mtx = self.features[index]
-        else:
-            coo = mmread(sample["path"])
-            rows = sample["rows"]
-            mtx = np.expand_dims(np.array([coo.row / rows, coo.col / rows, coo.data]).T.flatten(), axis=2)
-            self.features[index] = mtx
-            print(mtx.shape)
-        return mtx, np.argmin(np.array(sample[1:8]))
+        coo = mmread(sample["path"])
+        rows = sample["rows"]
+        feature_vec = np.array([coo.row / rows, coo.col / rows, coo.data]).T
+        return feature_vec, np.argmin(np.array(sample[1:8]))

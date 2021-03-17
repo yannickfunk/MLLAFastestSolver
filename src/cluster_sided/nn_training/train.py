@@ -9,26 +9,26 @@ import pandas as pd
 import os
 import json
 
+
 USER_PATH = os.environ["PROJECT"] + "/users/funk1/"
 DATA_PATH = USER_PATH + 'data/'
 DATASET_PATH = DATA_PATH + 'dataset.csv'
 FEATURE_PATH = DATA_PATH + 'feature_vecs4096.json'
 
-feature_vecs = json.load(open(FEATURE_PATH))
-df = pd.read_csv(DATASET_PATH)
-# df = df[df["path"].isin(list(feature_vecs.keys()))]
+df = pd.read_csv(DATASET_PATH).dropna()
 train_df = df.sample(frac=0.8)
 test_df = df.drop(train_df.index)
+print("train len: ", len(train_df))
+print("test len: ", len(test_df))
 
+train_set = MatrixDataset(train_df)
+test_set = MatrixDataset(test_df)
 
-train_set = MatrixDatasetTransformer(train_df)
-test_set = MatrixDatasetTransformer(test_df)
-
-train_loader = torch.utils.data.DataLoader(train_set, batch_size=1,
-                                           shuffle=True)
-val_loader = torch.utils.data.DataLoader(test_set, batch_size=1,
-                                         shuffle=False)
-device = torch.device("cuda:0")
+train_loader = torch.utils.data.DataLoader(train_set, batch_size=64,
+                                           shuffle=True, pin_memory=True)
+val_loader = torch.utils.data.DataLoader(test_set, batch_size=64,
+                                         shuffle=False, pin_memory=True)
+device = torch.device("cuda:2")
 print("device_count: ", torch.cuda.device_count())
 print("device: ", torch.cuda.get_device_name(0))
 
@@ -43,15 +43,30 @@ class PrintLayer(nn.Module):
         return x
 
 
-encoder_layer = nn.TransformerEncoderLayer(d_model=None, nhead=None)
+class Average(nn.Module):
+    def __init__(self):
+        super(Average, self).__init__()
+
+    def forward(self, x):
+        return x.mean(dim=1)
+
+
 model = nn.Sequential(
-    nn.TransformerEncoder(encoder_layer, num_layers=6),
-    PrintLayer(),
-    nn.Flatten(),
-    PrintLayer(),
-    nn.Linear(2048, 512),
+    nn.BatchNorm1d(18),
+
+    nn.Linear(18, 2048),
+    nn.BatchNorm1d(2048),
     nn.ReLU(),
-    nn.Linear(512, 7),
+
+    nn.Linear(2048, 2048),
+    nn.BatchNorm1d(2048),
+    nn.ReLU(),
+
+    nn.Linear(2048, 1024),
+    nn.BatchNorm1d(1024),
+    nn.ReLU(),
+
+    nn.Linear(1024, 7)
 ).to(device)
 
 model.double()
@@ -67,7 +82,7 @@ val_metrics = {
 evaluator = create_supervised_evaluator(model, metrics=val_metrics, device=device)
 
 
-@trainer.on(Events.ITERATION_COMPLETED(every=100))
+@trainer.on(Events.ITERATION_COMPLETED(every=1000))
 def log_training_loss(trainer):
     print(f"Epoch[{trainer.state.epoch}] Loss: {trainer.state.output:.2f}")
 
@@ -89,4 +104,4 @@ def log_validation_results(trainer):
 
 
 if __name__ == "__main__":
-    trainer.run(train_loader, max_epochs=1000)
+    trainer.run(train_loader, max_epochs=10000)
