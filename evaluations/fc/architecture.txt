@@ -1,0 +1,22 @@
+model = nn.Sequential(
+    nn.BatchNorm1d(18),
+
+    nn.Linear(18, 447),
+    nn.ReLU(),
+
+    nn.Linear(447, 1324),
+    nn.ReLU(),
+
+    nn.Linear(1324, 7),
+)
+
+Best loss 1.271824416510348 with
+{
+    'hiddenlayers': 2,
+    'neurons_1st': 447,
+    'neurons_2nd': 1324,
+    'neurons_3rd': 1868,
+    'activation': 'relu',
+    'lr': 0.013861108977817255,
+    'batch_size': 5024
+}
