@@ -17,5 +17,11 @@ class MatrixDatasetTransformer(torch.utils.data.Dataset):
         sample = self.data_df.iloc[index]
         coo = mmread(sample["path"])
         rows = sample["rows"]
+        nonzeros = len(coo.row)
+        padding = 0
+        if nonzeros % 128 != 0:
+            padding = (((nonzeros // 128) * 128) + 128) - nonzeros
+
         feature_vec = np.array([coo.row / rows, coo.col / rows, coo.data]).T
-        return feature_vec, np.argmin(np.array(sample[1:8]))
+        padded = np.append(feature_vec, np.zeros((padding, 3)), axis=0)
+        return padded, np.argmin(np.array(sample[1:8]))
