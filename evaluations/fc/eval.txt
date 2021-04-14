@@ -1,0 +1,29 @@
+Top 1 Accuracy: 0.604221635883905
+Top 2 Accuracy: 0.783641160949868
+Top 3 Accuracy: 0.862796833773087
+Top 4 Accuracy: 0.9023746701846965
+Top 5 Accuracy: 0.9261213720316622
+Top 6 Accuracy: 0.9604221635883905
+
+
+Top 2 Median slowdown: 1.798570779119646
+Top 3 Median slowdown: 1.9105419044414638
+Top 4 Median slowdown: 2.1926518552737533
+Top 5 Median slowdown: 2.355051444925722
+Top 6 Median slowdown: 2.5082278707299634
+Top 7 Median slowdown: 2.5336646810665586
+Median slowdown:  2.5336646810665586
+
+              precision    recall  f1-score   support
+
+        bicg       0.59      0.37      0.46        35
+    bicgstab       0.67      0.43      0.52        82
+          cg       1.00      0.06      0.12        16
+         cgs       0.50      0.14      0.22        14
+         fcg       0.75      0.38      0.50         8
+       gmres       0.75      0.72      0.74        94
+         idr       0.52      0.82      0.64       130
+
+    accuracy                           0.60       379
+   macro avg       0.68      0.42      0.46       379
+weighted avg       0.64      0.60      0.58       379
