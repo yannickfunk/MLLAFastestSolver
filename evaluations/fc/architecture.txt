@@ -9,6 +9,7 @@ model = nn.Sequential(
 
     nn.Linear(1324, 7),
 )
+
 Best loss 1.271824416510348 with
 {
     'hiddenlayers': 2,
