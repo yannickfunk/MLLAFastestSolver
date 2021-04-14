@@ -18,5 +18,5 @@ Best loss 1.271824416510348 with
     'neurons_3rd': 1868,
     'activation': 'relu',
     'lr': 0.013861108977817255,
-    'batch_size': 5024
+    'batch_size': 502
 }
