@@ -55,6 +55,70 @@ def chunks_per_row(mtx):
     return np.array(chunks), np.array(chunksizes)
 
 
+def get_feature_sequence_vec(mtx, x_block, y_block):
+    mean_x = 0 if len(mtx.row) == 0 else np.mean(mtx.row)
+    std_x = 0 if len(mtx.row) == 0 else np.std(mtx.row)
+    min_x = 0 if len(mtx.row) == 0 else np.min(mtx.row)
+    max_x = 0 if len(mtx.row) == 0 else np.max(mtx.row)
+    mean_y = 0 if len(mtx.col) == 0 else np.mean(mtx.col)
+    std_y = 0 if len(mtx.col) == 0 else np.std(mtx.col)
+    min_y = 0 if len(mtx.col) == 0 else np.min(mtx.col)
+    max_y = 0 if len(mtx.col) == 0 else np.max(mtx.col)
+    density = mtx.getnnz() / (mtx.shape[0] * mtx.shape[1])
+    return np.expand_dims(np.array([
+        x_block,
+        y_block,
+        mean_x,
+        std_x,
+        min_x,
+        max_x,
+        mean_y,
+        std_y,
+        min_y,
+        max_y,
+        density,
+    ]), axis=1)
+
+
+def get_feature_vec(mtx):
+    rows = mtx.shape[0]
+    nonzeros = mtx.nnz
+    density = mtx.getnnz() / (mtx.shape[0] * mtx.shape[1])
+    avg_nnz = mtx.getnnz() / mtx.shape[0]
+    nnz_p_r = nnz_per_row(mtx)
+    nnz_p_r = np.array([0]) if len(nnz_p_r) == 0 else nnz_p_r
+    max_nnz = int(nnz_p_r.max())
+    std_nnz = np.std(nnz_per_row(mtx))
+    chunks, chunk_sizes = chunks_per_row(mtx)
+    chunks = np.array([0]) if len(chunks) == 0 else chunks
+    chunk_sizes = np.array([0]) if len(chunk_sizes) == 0 else chunk_sizes
+    avg_row_block_count = np.mean(chunks)
+    std_row_block_count = np.std(chunks)
+    min_row_block_count = np.min(chunks)
+    max_row_block_count = np.max(chunks)
+    avg_row_block_size = np.mean(chunk_sizes)
+    std_row_block_size = np.std(chunk_sizes)
+    min_row_block_size = np.min(chunk_sizes)
+    max_row_block_size = np.max(chunk_sizes)
+    block_count = np.sum(chunks)
+    return np.array([
+        rows,
+        nonzeros,
+        density,
+        avg_nnz,
+        max_nnz,
+        std_nnz,
+        avg_row_block_count,
+        std_row_block_count,
+        min_row_block_count,
+        max_row_block_count,
+        avg_row_block_size,
+        std_row_block_size,
+        min_row_block_size,
+        max_row_block_size,
+        block_count,
+    ], dtype=np.float64)
+
 def get_feature_df():
     feature_dict = get_feature_path_dict()
     for key, meta in feature_dict.items():
