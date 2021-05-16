@@ -54,7 +54,7 @@ class Average(nn.Module):
 
 
 class InformerEnc(nn.Module):
-    def __init__(self, factor=5, d_model=11, n_heads=8, e_layers=3, d_ff=512, dropout=0.0, activation='gelu',
+    def __init__(self, factor=5, d_model=11, n_heads=8, e_layers=5, d_ff=512, dropout=0.0, activation='gelu',
                  output_attention=False, distil=True):
         super(InformerEnc, self).__init__()
 
@@ -84,9 +84,15 @@ class InformerEnc(nn.Module):
 
 
 model = nn.Sequential(
-    InformerEnc(d_model=11000),
+    InformerEnc(d_model=11),
     Average(),
-    nn.Linear(11000, 7),
+    nn.Linear(11, 447),
+    nn.ReLU(),
+
+    nn.Linear(447, 1324),
+    nn.ReLU(),
+
+    nn.Linear(1324, 7),
 ).to(device)
 
 model.double()

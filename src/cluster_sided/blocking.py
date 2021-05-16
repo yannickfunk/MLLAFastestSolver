@@ -32,6 +32,8 @@ def chunks_n(mtx, n):
 
 
 def chunks_blocksize(mtx, block_size):
+    if mtx.shape[0] <= block_size:
+        return [(coo_matrix(mtx), 0, 0)]
     mtx = csr_matrix(mtx)
     result_chunks = []
     for i in range(0, mtx.shape[0], block_size):
@@ -62,7 +64,6 @@ def get_feature_dict(paths, worker):
 
 
 df = pd.read_csv(DATASET_PATH).dropna()
-df = df[df["rows"] > 1024]
 mtx_paths = list(df["path"].values)
 
 
