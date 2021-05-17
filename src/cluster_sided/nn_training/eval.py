@@ -119,13 +119,13 @@ df = pd.read_csv("val_set.csv")
 eval_set = MatrixEvalDataset(df)
 val_loader = torch.utils.data.DataLoader(eval_set, batch_size=len(eval_set),
                                          shuffle=False, pin_memory=True)
-model_path = "models/model_1.28_0.6016.pt"
+model_path = "models/model_reducedset1_1.36_0.5963.pt"
 device = torch.device("cuda:2")
 
 model = nn.Sequential(
-    nn.BatchNorm1d(18),
+    nn.BatchNorm1d(9),
 
-    nn.Linear(18, 447),
+    nn.Linear(9, 447),
     nn.ReLU(),
 
     nn.Linear(447, 1324),

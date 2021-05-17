@@ -13,7 +13,6 @@ import json
 USER_PATH = os.environ["PROJECT"] + "/users/funk1/"
 DATA_PATH = USER_PATH + 'data/'
 DATASET_PATH = DATA_PATH + 'dataset.csv'
-FEATURE_PATH = DATA_PATH + 'feature_vecs4096.json'
 
 df = pd.read_csv(DATASET_PATH).dropna()
 train_df = df.sample(frac=0.8)
@@ -52,9 +51,9 @@ class Average(nn.Module):
 
 
 model = nn.Sequential(
-    nn.BatchNorm1d(18),
+    nn.BatchNorm1d(9),
 
-    nn.Linear(18, 447),
+    nn.Linear(9, 447),
     nn.ReLU(),
 
     nn.Linear(447, 1324),
@@ -64,7 +63,7 @@ model = nn.Sequential(
 ).to(device)
 
 model.double()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+optimizer = optim.Adam(model.parameters(), lr=0.01386)
 criterion = nn.CrossEntropyLoss()
 
 trainer = create_supervised_trainer(model, optimizer, criterion, device=device)
@@ -98,10 +97,9 @@ def log_validation_results(trainer):
         f"val_accuracy: {metrics['accuracy']:.3f}, val_loss: {metrics['nll']:.3f}")
     if metrics['accuracy'] > trainer.best_accuracy:
         trainer.best_accuracy = metrics['accuracy']
-        filename = f"models/model_{metrics['nll']:.2f}_{metrics['accuracy']:.4f}.pt"
+        filename = f"models/model_reducedset1_{metrics['nll']:.2f}_{metrics['accuracy']:.4f}.pt"
         torch.save(model.state_dict(), filename)
         print(f"saved {filename}")
-
 
 if __name__ == "__main__":
     trainer.run(train_loader, max_epochs=10000)
