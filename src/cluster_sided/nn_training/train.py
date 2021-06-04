@@ -51,9 +51,9 @@ class Average(nn.Module):
 
 
 model = nn.Sequential(
-    nn.BatchNorm1d(9),
+    nn.BatchNorm1d(6),
 
-    nn.Linear(9, 447),
+    nn.Linear(6, 447),
     nn.ReLU(),
 
     nn.Linear(447, 1324),

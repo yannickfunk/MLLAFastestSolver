@@ -14,6 +14,6 @@ class MatrixDataset(torch.utils.data.Dataset):
         sample = self.data_df.iloc[index]
         features = sample[8:]
 
-        # ['avg_nnz', 'density', 'max_nnz', 'nonzeros', 'nsym', 'posdef', 'psym', 'rows', 'std_nnz']
-        reduced = np.concatenate([features[0:1], features[4:6], features[10:16]])
+        # ['density', 'nonzeros', 'nsym', 'posdef', 'psym', 'rows']
+        reduced = np.concatenate([features[4:5], features[10:15]])
         return np.array(reduced).astype("float64"), np.argmin(np.array(sample[1:8]))

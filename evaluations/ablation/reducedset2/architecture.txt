@@ -1,0 +1,16 @@
+model = nn.Sequential(
+    nn.BatchNorm1d(6),
+
+    nn.Linear(6, 447),
+    nn.ReLU(),
+
+    nn.Linear(447, 1324),
+    nn.ReLU(),
+
+    nn.Linear(1324, 7),
+).to(device)
+
+Adam
+lr=0.01386
+
+# ['density', 'nonzeros', 'nsym', 'posdef', 'psym', 'rows']

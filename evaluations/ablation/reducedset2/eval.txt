@@ -1,0 +1,39 @@
+Top 1 Accuracy: 0.5910290237467019
+Top 2 Accuracy: 0.7757255936675461
+Top 3 Accuracy: 0.8469656992084432
+Top 4 Accuracy: 0.8891820580474934
+Top 5 Accuracy: 0.9261213720316622
+Top 6 Accuracy: 0.9551451187335093
+Top 7 Accuracy: 1.0
+
+Top 1 Median slowdown: nan
+Top 2 Median slowdown: 1.3759158444885045
+Top 3 Median slowdown: 1.5516520034236658
+Top 4 Median slowdown: 1.717865256013148
+Top 5 Median slowdown: 1.9312021302722644
+Top 6 Median slowdown: 2.081287239385025
+Top 7 Median slowdown: 2.1812525623030483
+Median slowdown:  2.1812525623030483
+
+Top 1 Mean slowdown: nan
+Top 2 Mean slowdown: 1.2662085463710605e+17
+Top 3 Mean slowdown: 9.648524379367378e+16
+Top 4 Mean slowdown: 8.818873582067685e+16
+Top 5 Mean slowdown: 7.846714289603603e+16
+Top 6 Mean slowdown: 8.577178103878149e+16
+Top 7 Mean slowdown: 8.093250660081611e+16
+Mean slowdown:  8.093250660081611e+16
+
+              precision    recall  f1-score   support
+
+        bicg       0.36      0.23      0.28        22
+    bicgstab       0.58      0.42      0.49        85
+          cg       0.00      0.00      0.00        19
+         cgs       0.00      0.00      0.00        14
+         fcg       0.00      0.00      0.00         8
+       gmres       0.82      0.76      0.79        87
+         idr       0.52      0.81      0.64       144
+
+    accuracy                           0.59       379
+   macro avg       0.33      0.32      0.31       379
+weighted avg       0.54      0.59      0.55       379
